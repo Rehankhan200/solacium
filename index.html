@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Student Mental Health Support</title>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* Body */
+body {
+    font-family: 'Roboto', sans-serif;
+    height: 100vh;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    /* Gradient + stable Unsplash background */
+    background: linear-gradient(135deg, #89f7fe 0%, #66a6ff 100%), 
+                url('https://images.unsplash.com/photo-1596495577886-d920f3e8b2e5?auto=format&fit=crop&w=800&q=80') no-repeat center center;
+    background-size: cover;
+    background-blend-mode: overlay;
+}
+
+/* Chat Container */
+.chat-container {
+    background: rgba(255, 255, 255, 0.95);
+    width: 420px;
+    max-width: 90%;
+    border-radius: 15px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* Messages Area */
+.messages {
+    flex: 1;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    overflow-y: auto;
+    background: rgba(247, 249, 252, 0.9);
+}
+
+/* Individual Message */
+.message { 
+    max-width: 80%; 
+    padding: 12px 16px; 
+    border-radius: 20px; 
+    animation: fadeIn 0.5s ease-in; 
+    word-wrap: break-word; 
+}
+
+/* Student Message */
+.student { 
+    background: #d1f0ff; 
+    align-self: flex-end; 
+    color: #045d8c; 
+}
+
+/* AI Message */
+.ai { 
+    background: #ffe3b3; 
+    align-self: flex-start; 
+    color: #804b00; 
+}
+
+/* AI stress/emotion highlight */
+.ai.stress { 
+    background: #ffb3b3; 
+    color: #800000; 
+}
+
+/* Input Area */
+.input-container {
+    display: flex;
+    padding: 15px;
+    background: #fff;
+    border-top: 1px solid #ddd;
+}
+
+.input-container input {
+    flex: 1;
+    padding: 12px 15px;
+    border-radius: 25px;
+    border: 1px solid #ccc;
+    outline: none;
+    transition: all 0.2s;
+}
+
+.input-container input:focus { 
+    border-color: #66a6ff; 
+    box-shadow: 0 0 5px rgba(102, 166, 255, 0.5); 
+}
+
+.input-container button {
+    margin-left: 10px;
+    padding: 12px 18px;
+    border: none;
+    border-radius: 25px;
+    background: #66a6ff;
+    color: #fff;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.input-container button:hover { 
+    background: #1c54b2; 
+}
+
+/* Animations */
+@keyframes fadeIn { 
+    from {opacity:0; transform: translateY(10px);} 
+    to {opacity:1; transform: translateY(0);} 
+}
+</style>
+</head>
+<body>
+
+<div class="chat-container">
+    <div class="messages" id="messages"></div>
+    <div class="input-container">
+        <input type="text" id="studentMessage" placeholder="Type your message...">
+        <button onclick="sendMessage()">Send</button>
+    </div>
+</div>
+
+<script>
+async function sendMessage() {
+    const input = document.getElementById("studentMessage");
+    const text = input.value.trim();
+    if (!text) return;
+
+    // Display student message
+    const studentDiv = document.createElement("div");
+    studentDiv.className = "message student";
+    studentDiv.textContent = text;
+    document.getElementById("messages").appendChild(studentDiv);
+
+    input.value = "";
+
+    // Call backend API
+    try {
+        const res = await fetch("http://127.0.0.1:8000/analyze", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({message: text})
+        });
+        const data = await res.json();
+
+        // Display AI response
+        const aiDiv = document.createElement("div");
+        aiDiv.className = "message ai";
+        if(data.ai_emotion.toLowerCase().includes("negative") || data.ai_emotion.toLowerCase().includes("angry")){
+            aiDiv.classList.add("stress");
+        }
+        aiDiv.innerHTML = `<strong>Response:</strong> ${data.response}<br><strong>AI Emotion:</strong> ${data.ai_emotion}`;
+        document.getElementById("messages").appendChild(aiDiv);
+        document.getElementById("messages").scrollTop = document.getElementById("messages").scrollHeight;
+    } catch(err) {
+        console.error(err);
+        alert("Error connecting to backend. Make sure it is running.");
+    }
+}
+</script>
+
+</body>
+</html>
